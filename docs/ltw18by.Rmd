@@ -7,7 +7,9 @@ output:
     df_print: paged
 ---
 
-Für die folgende Analyse wurden alle Tweets gesammelt, die das Wort "ltw18by" beinhalten. Den Link zum Notebook gibts [hier](https://github.com/franziloew/Ltw19by/blob/master/docs/ltw18by.Rmd)
+Für die folgende Analyse wurden alle Tweets gesammelt, die das Wort "ltw18by" beinhalten (nur original Tweets, keine Retweets). Der Datensatz enthält insgesamt 12.381 Tweets. 
+
+Den Link zum Notebook gibts [hier](https://github.com/franziloew/Ltw19by/blob/master/docs/ltw18by.Rmd)
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
 rm(list=ls())
@@ -41,7 +43,9 @@ col <- RColorBrewer::brewer.pal(4, 'Dark2')
 ```
 
 ```{r eval=FALSE, include=FALSE}
-rt <- search_tweets("ltw18by", n = 18000, include_rts = FALSE, retryonratelimit = T)
+rt <- search_tweets("ltw18by OR ltwby2018 OR ltwby18 OR ltwbayern OR bayernwahl2018", 
+                    n = 18000, include_rts = FALSE, 
+                    retryonratelimit = T)
 save(rt, file="ltw18by_tweets.Rda")
 ```
 
@@ -52,7 +56,7 @@ load(file="../data/ltw18by_tweets.Rda")
 ```{r}
 rt %>%
   mutate(created_at = created_at + hours(2)) %>%
-  filter(created_at > as.POSIXct("2018-10-14 17:00:00")) %>%
+  filter(created_at > as.POSIXct("2018-10-14 16:00:00")) %>%
   ts_plot("5 minutes") +
   ggplot2::labs(
     x = NULL, y = NULL,
@@ -65,7 +69,7 @@ rt %>%
 ```{r message=TRUE, warning=TRUE}
 rt %>%
   count(screen_name, sort=TRUE) %>%
-  top_n(10) %>%
+  top_n(15) %>%
   ggplot(aes(reorder(screen_name, n),n)) +
   geom_col(fill = col[1], alpha = 0.8) +
   coord_flip() +
@@ -94,8 +98,10 @@ rt %>%
 library(tidytext)
 # define stopwords
 stop_words <- stopwords::stopwords("de", source = "snowball")
-stop_words <- c(stop_words, "https","t.co","mal","mehr","ltw18by","dass")
+stop_words <- c(stop_words, "https","t.co","mal","mehr","ltw18by","ltwby18","ltwby2018","dass","ltwbayern", "ltwby")
+```
 
+```{r}
 tokenized <- rt %>%
   select(status_id, screen_name, created_at, text) %>% 
   unnest_tokens("words", text) %>%
@@ -107,6 +113,24 @@ tokenized %>%
   ggplot(aes(reorder(words, n),n)) +
   geom_col(fill = col[1], alpha=0.8) +
   coord_flip() +
-  labs(x = NULL, y = NULL, title = "Top 30 Wörter in den Tweets",
-       subtitle = "Stopwords, sowie 'ltw18by' wurden rausgefiltert.")
+  labs(x = NULL, y = NULL, title = "Top 30 Wörter in den Tweets")
 ```
+
+```{r}
+bigrams <- rt %>%
+  select(status_id, screen_name, created_at, text) %>% 
+  unnest_tokens(bigram, text, token="ngrams", n=2) %>%
+  separate(bigram, c("word1", "word2"), sep = " ") %>%
+  filter(!word1 %in% stop_words) %>% 
+    filter(!word2 %in% stop_words) %>%
+  unite(bigram, word1, word2, sep=" ")
+
+bigrams %>%
+  count(bigram, sort=T) %>%
+  top_n(30) %>%
+  ggplot(aes(reorder(bigram, n),n)) +
+  geom_col(fill = col[1], alpha=0.8) +
+  coord_flip() +
+  labs(x = NULL, y = NULL, title = "Top 30 Bigrams in den Tweets")
+```
+
