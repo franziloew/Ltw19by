@@ -46,7 +46,7 @@ col <- RColorBrewer::brewer.pal(4, 'Dark2')
 rt <- search_tweets("ltw18by OR ltwby2018 OR ltwby18 OR ltwbayern OR bayernwahl2018", 
                     n = 18000, include_rts = FALSE, 
                     retryonratelimit = T)
-save(rt, file="ltw18by_tweets.Rda")
+save(rt, file="../data/ltw18by_tweets.Rda")
 ```
 
 ```{r}
@@ -66,7 +66,7 @@ rt %>%
   )
 ```
 
-```{r message=TRUE, warning=TRUE}
+```{r message=FALSE, warning=FALSE}
 rt %>%
   count(screen_name, sort=TRUE) %>%
   top_n(15) %>%
