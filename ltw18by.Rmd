@@ -107,3 +107,4 @@ tokenized %>%
        subtitle = "Stopwords, sowie 'ltw18by' wurden rausgefiltert.")
 ```
 
+[Link zum Notebook](https://github.com/franziloew/Ltw19by/blob/master/ltw18by.Rmd)
