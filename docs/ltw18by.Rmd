@@ -1,9 +1,13 @@
 ---
 title: "Tweets zu den Landtagswahlen in Bayern"
+author: Franziska Löw
+date: "15. Oktober 2018"
 output:
   html_document:
     df_print: paged
 ---
+
+Für die folgende Analyse wurden alle Tweets gesammelt, die das Wort "ltw18by" beinhalten. Den Link zum Notebook gibts [hier](https://github.com/franziloew/Ltw19by/blob/master/docs/ltw18by.Rmd)
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
 rm(list=ls())
@@ -42,7 +46,7 @@ save(rt, file="ltw18by_tweets.Rda")
 ```
 
 ```{r}
-load(file="ltw18by_tweets.Rda")
+load(file="../data/ltw18by_tweets.Rda")
 ```
 
 ```{r}
@@ -106,5 +110,3 @@ tokenized %>%
   labs(x = NULL, y = NULL, title = "Top 30 Wörter in den Tweets",
        subtitle = "Stopwords, sowie 'ltw18by' wurden rausgefiltert.")
 ```
-
-[Link zum Notebook](https://github.com/franziloew/Ltw19by/blob/master/ltw18by.Rmd)
