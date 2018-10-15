@@ -1,0 +1,109 @@
+---
+title: "Tweets zu den Landtagswahlen in Bayern"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+rm(list=ls())
+library(rtweet)
+library(tidyverse)
+library(lubridate)
+
+# Theming
+quartzFonts(
+  Roboto =
+    c("Roboto-Light",
+      "Roboto-Bold",
+      "Roboto-Regular",
+      "Roboto-Thin")
+)
+
+theme_set(
+  theme_bw(base_family = "Roboto", base_size = 10) +
+    theme(
+      axis.title = element_text(size = 12),
+      plot.title = element_text(size = 14,
+                                margin = margin(0, 0, 4, 0, "pt")),
+      plot.subtitle = element_text(size = 8),
+      plot.caption = element_text(size = 6),
+      panel.border = element_blank()
+    )
+)
+
+rm(list=ls())
+col <- RColorBrewer::brewer.pal(4, 'Dark2')
+```
+
+```{r eval=FALSE, include=FALSE}
+rt <- search_tweets("ltw18by", n = 18000, include_rts = FALSE, retryonratelimit = T)
+save(rt, file="ltw18by_tweets.Rda")
+```
+
+```{r}
+load(file="ltw18by_tweets.Rda")
+```
+
+```{r}
+rt %>%
+  mutate(created_at = created_at + hours(2)) %>%
+  filter(created_at > as.POSIXct("2018-10-14 17:00:00")) %>%
+  ts_plot("5 minutes") +
+  ggplot2::labs(
+    x = NULL, y = NULL,
+    title = "Frequenz der #ltw18by Tweets",
+    subtitle = "aggregiert über ein 5 Minuten Intervall",
+    caption = "\nSource: Data collected from Twitter's REST API via rtweet"
+  )
+```
+
+```{r message=TRUE, warning=TRUE}
+rt %>%
+  count(screen_name, sort=TRUE) %>%
+  top_n(10) %>%
+  ggplot(aes(reorder(screen_name, n),n)) +
+  geom_col(fill = col[1], alpha = 0.8) +
+  coord_flip() +
+  labs(x = NULL, y = NULL, title = "Wer hat die meisten Tweets gesendet?")
+```
+
+## Welche Tweets wurden am häufigsten geteilt?
+```{r}
+rt %>%
+  select(screen_name, text, retweet_count) %>%
+  arrange(desc(retweet_count)) %>%
+  top_n(15, retweet_count) %>%
+  htmlTable::htmlTable(align = "l")
+```
+
+## Welche Tweets wurden am häufigsten favorisiert?
+```{r}
+rt %>%
+  select(screen_name, text, favorite_count) %>%
+  arrange(desc(favorite_count)) %>%
+  top_n(15, favorite_count) %>%
+  htmlTable::htmlTable(align = "l")
+```
+
+```{r message=TRUE, warning=TRUE}
+library(tidytext)
+# define stopwords
+stop_words <- stopwords::stopwords("de", source = "snowball")
+stop_words <- c(stop_words, "https","t.co","mal","mehr","ltw18by","dass")
+
+tokenized <- rt %>%
+  select(status_id, screen_name, created_at, text) %>% 
+  unnest_tokens("words", text) %>%
+  filter(!words %in% stop_words)
+
+tokenized %>%
+  count(words, sort = T) %>%
+  top_n(30) %>%
+  ggplot(aes(reorder(words, n),n)) +
+  geom_col(fill = col[1], alpha=0.8) +
+  coord_flip() +
+  labs(x = NULL, y = NULL, title = "Top 30 Wörter in den Tweets",
+       subtitle = "Stopwords, sowie 'ltw18by' wurden rausgefiltert.")
+```
+
